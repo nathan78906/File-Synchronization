@@ -28,17 +28,17 @@ int check_hash(const char *hash1, const char *hash2) {
     return 0;
 }
 
-int fcopy_client(char *src_path, char *dest_path, char *host, int port){	
+int fcopy_client(char *src_path, char *dest_path, char *host, int port){    
     // create socket 
     int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
     if(sock_fd == -1) {
-		perror("client: socket");
+        perror("client: socket");
         exit(1);
-	}
+    }
 
-	// Set the IP and port of the server to connect to
-	struct sockaddr_in server;
-	server.sin_family = AF_INET;
+    // Set the IP and port of the server to connect to
+    struct sockaddr_in server;
+    server.sin_family = AF_INET;
     server.sin_port = htons(port); 
 
     if (inet_pton(AF_INET, host, &server.sin_addr) < 1) {
@@ -94,45 +94,45 @@ void recurse(char *src_path, char *dest_path, int sock_fd){
     // populate size field of struct
     root->size = sb.st_size;
 
-	//printf("%s %zu %o\n", root->path, root->size, root->mode & 0777);
+    //printf("%s %zu %o\n", root->path, root->size, root->mode & 0777);
 
-	// Write dest to server
+    // Write dest to server
     if(write(sock_fd, dest_path, MAXPATH*sizeof(char)) == -1) {
-    	fprintf(stderr, "write: failed at '%s'\n", dest_path);
-    	close(sock_fd);
+        fprintf(stderr, "write: failed at '%s'\n", dest_path);
+        close(sock_fd);
         exit(1);
     }
 
     // Write struct to server
     if(write(sock_fd, root->path, MAXPATH*sizeof(char)) == -1) {
-    	fprintf(stderr, "write: failed at '%s'\n", root->path);
-    	close(sock_fd);
+        fprintf(stderr, "write: failed at '%s'\n", root->path);
+        close(sock_fd);
         exit(1);
     }
 
     uint32_t mode = htonl(root->mode);
     if(write(sock_fd, &mode, sizeof(uint32_t)) == -1) {
-    	fprintf(stderr, "write: failed at sending mode for '%s'\n", root->path);
-    	close(sock_fd);
+        fprintf(stderr, "write: failed at sending mode for '%s'\n", root->path);
+        close(sock_fd);
         exit(1);
     }
 
     if(write(sock_fd, root->hash, HASH_SIZE*sizeof(char)) == -1) {
-    	fprintf(stderr, "write: failed at sending hash for '%s'\n", root->path);
-    	close(sock_fd);
+        fprintf(stderr, "write: failed at sending hash for '%s'\n", root->path);
+        close(sock_fd);
         exit(1);
     }
     uint32_t size = htonl(root->size);
     if(write(sock_fd, &size, sizeof(uint32_t)) == -1) {
-    	fprintf(stderr, "write: failed at sending size for '%s'\n", root->path);
-    	close(sock_fd);
+        fprintf(stderr, "write: failed at sending size for '%s'\n", root->path);
+        close(sock_fd);
         exit(1);
     }
-	
-	int msg;
+    
+    int msg;
     if(read(sock_fd, &msg, sizeof(int)) == -1) {
-    	fprintf(stderr, "read: failed at reading message\n");
-    	close(sock_fd);
+        fprintf(stderr, "read: failed at reading message\n");
+        close(sock_fd);
         exit(1);
     }
 
@@ -141,8 +141,8 @@ void recurse(char *src_path, char *dest_path, int sock_fd){
     } else if (msg == MATCH) {
 
     } else if (msg == MATCH_ERROR) {
-    	fprintf(stderr, "Match Error: %s\n", root->path);
-    	close(sock_fd);
+        fprintf(stderr, "Match Error: %s\n", root->path);
+        close(sock_fd);
         exit(1);
     }
 
@@ -194,116 +194,116 @@ void recurse(char *src_path, char *dest_path, int sock_fd){
             // populate hash field of struct
             strcpy(child->hash, hash(fff));
 
-			//printf("%s %zu %o\n", child->path, child->size, child->mode & 0777);
-			
-			char *dest = (char *)malloc(strlen(dest_path) + 2 + strlen(dir->d_name));
+            //printf("%s %zu %o\n", child->path, child->size, child->mode & 0777);
+            
+            char *dest = (char *)malloc(strlen(dest_path) + 2 + strlen(dir->d_name));
             strcpy(dest, dest_path);
-    		strcat(dest, "/");
-    		strcat(dest, dir->d_name);
+            strcat(dest, "/");
+            strcat(dest, dir->d_name);
 
             if(write(sock_fd, dest, MAXPATH*sizeof(char)) == -1) {
-            	fprintf(stderr, "write: failed at '%s'\n", dest);
-            	close(sock_fd);
-        		exit(1);
+                fprintf(stderr, "write: failed at '%s'\n", dest);
+                close(sock_fd);
+                exit(1);
             }
 
             if(write(sock_fd, child->path, MAXPATH*sizeof(char)) == -1) {
-            	fprintf(stderr, "write: failed at writing path'%s'\n", child->path);
-            	close(sock_fd);
-        		exit(1);
+                fprintf(stderr, "write: failed at writing path'%s'\n", child->path);
+                close(sock_fd);
+                exit(1);
             }
 
             uint32_t mode2 = htonl(child->mode);
             if(write(sock_fd, &mode2, sizeof(uint32_t)) == -1) {
-            	fprintf(stderr, "write: failed at writing mode for '%s'\n", child->path);
-            	close(sock_fd);
-        		exit(1);
+                fprintf(stderr, "write: failed at writing mode for '%s'\n", child->path);
+                close(sock_fd);
+                exit(1);
             }
 
             if(write(sock_fd, child->hash, HASH_SIZE*sizeof(char)) == -1) {
-            	fprintf(stderr, "write: failed at writing hash for '%s'\n", child->path);
-            	close(sock_fd);
-        		exit(1);
+                fprintf(stderr, "write: failed at writing hash for '%s'\n", child->path);
+                close(sock_fd);
+                exit(1);
             }
 
             uint32_t size2 = htonl(child->size);
             if(write(sock_fd, &size2, sizeof(uint32_t)) == -1) {
-            	fprintf(stderr, "write: failed at writing size for'%s'\n", child->path);
-            	close(sock_fd);
-        		exit(1);
+                fprintf(stderr, "write: failed at writing size for'%s'\n", child->path);
+                close(sock_fd);
+                exit(1);
             }
 
-			int msg;
+            int msg;
             if(read(sock_fd, &msg, sizeof(int)) == -1) {
-            	fprintf(stderr, "read: failed at getting message\n");
-            	close(sock_fd);
-        		exit(1);
+                fprintf(stderr, "read: failed at getting message\n");
+                close(sock_fd);
+                exit(1);
             }
 
-			if(msg == MISMATCH) {
-				//printf("sending copy");
-				FILE *ffff;
+            if(msg == MISMATCH) {
+                //printf("sending copy");
+                FILE *ffff;
                 //ffff = malloc(sizeof(FILE *));
                 ffff = fopen(fname, "rb"); // error check
-				int fd = fileno(ffff);
-	            if (fd == -1) {
-	                fprintf(stderr, "fopen: '%s': permision denied\n", fname);
-	                exit(1);
-	            }
+                int fd = fileno(ffff);
+                if (fd == -1) {
+                    fprintf(stderr, "fopen: '%s': permision denied\n", fname);
+                    exit(1);
+                }
 
-				char buf[child->size];
-				int r;
-				while (1) {
-					r = read(fd, buf, sizeof(buf));
-					if (r == 0)
-						break;
-					if (r == -1) {
-						fprintf(stderr, "read: failed to read '%s'\n", fname);
-						exit(1);
-					}
-					if(write(sock_fd, buf, r) == -1) {
-		            	fprintf(stderr, "write: failed at transferring data for '%s'\n", child->path);
-		            	close(sock_fd);
-    					exit(1);
-			        }
-				}
+                char buf[child->size];
+                int r;
+                while (1) {
+                    r = read(fd, buf, sizeof(buf));
+                    if (r == 0)
+                        break;
+                    if (r == -1) {
+                        fprintf(stderr, "read: failed to read '%s'\n", fname);
+                        exit(1);
+                    }
+                    if(write(sock_fd, buf, r) == -1) {
+                        fprintf(stderr, "write: failed at transferring data for '%s'\n", child->path);
+                        close(sock_fd);
+                        exit(1);
+                    }
+                }
 
-				close(fd);
-				fclose(ffff);
+                close(fd);
+                fclose(ffff);
 
-				int recieved;
-			    if(read(sock_fd, &recieved, sizeof(int)) == -1){
-			    	fprintf(stderr, "read: failed at getting transmit message");
-			    	close(sock_fd);
-        			exit(1);
-			    }
-			    if(recieved == TRANSMIT_OK){
-			    	continue;
-			    } else if (recieved == TRANSMIT_ERROR){
-			    	fprintf(stderr, "transmit error for file '%s'", child->path);
-			    	close(sock_fd);
-        			exit(1);
-			    }
+                int recieved;
+                if(read(sock_fd, &recieved, sizeof(int)) == -1){
+                    fprintf(stderr, "read: failed at getting transmit message");
+                    close(sock_fd);
+                    exit(1);
+                }
+                if(recieved == TRANSMIT_OK){
+                    continue;
+                } else if (recieved == TRANSMIT_ERROR){
+                    fprintf(stderr, "transmit error for file '%s'", child->path);
+                    close(sock_fd);
+                    exit(1);
+                }
 
-				
+                
             } else if (msg == MATCH) {
 
             } else if (msg == MATCH_ERROR) {
-            	fprintf(stderr, "Match Error: %s\n", child->path);
-            	close(sock_fd);
-        		exit(1);
+                fprintf(stderr, "Match Error: %s\n", child->path);
+                close(sock_fd);
+                exit(1);
             }
 
         } else if(S_ISDIR(lb.st_mode)) {
             char *dest = (char *)malloc(strlen(dest_path) + 2 + strlen(dir->d_name));
             strcpy(dest, dest_path);
-    		strcat(dest, "/");
-    		strcat(dest, dir->d_name);
+            strcat(dest, "/");
+            strcat(dest, dir->d_name);
 
-    		char *src = (char *)malloc(strlen(src_path) + 2 + strlen(dir->d_name));
-    		strcpy(src, src_path);
-    		strcat(src, "/");
-    		strcat(src, dir->d_name);
+            char *src = (char *)malloc(strlen(src_path) + 2 + strlen(dir->d_name));
+            strcpy(src, src_path);
+            strcat(src, "/");
+            strcat(src, dir->d_name);
 
             recurse(src, dest, sock_fd);
         }
@@ -317,8 +317,8 @@ void fcopy_server(int port){
     int MATCH_ERROR_N = 3;
     int TRANSMIT_OK_N = 4;
     int TRANSMIT_ERROR_N = 5;
-	int on = 1;
-	// create socket
+    int on = 1;
+    // create socket
     int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
     if(sock_fd == -1){
         perror("server: socket");
@@ -367,257 +367,257 @@ void fcopy_server(int port){
             //exit(1);
         }
 
-		// Recieve messages        
+        // Recieve messages        
 
         char dest[MAXPATH];
         while(read(client_fd, dest, MAXPATH*sizeof(char)) > 0) {
-        	struct fileinfo *root;
-        	root = malloc(sizeof(struct fileinfo));
-        	if(read(client_fd, root->path, MAXPATH*sizeof(char)) == -1) {
-        		fprintf(stderr, "read: failed at reading '%s'\n", root->path);
-        		close(client_fd);
-        	}
+            struct fileinfo *root;
+            root = malloc(sizeof(struct fileinfo));
+            if(read(client_fd, root->path, MAXPATH*sizeof(char)) == -1) {
+                fprintf(stderr, "read: failed at reading '%s'\n", root->path);
+                close(client_fd);
+            }
 
-        	uint32_t mode;
-	        if(read(client_fd, &mode, sizeof(uint32_t)) == -1) {
-	        	fprintf(stderr, "read: failed at reading mode for '%s'\n", root->path);
-	        	close(client_fd);
-	        }
-	        root->mode = ntohl(mode);
+            uint32_t mode;
+            if(read(client_fd, &mode, sizeof(uint32_t)) == -1) {
+                fprintf(stderr, "read: failed at reading mode for '%s'\n", root->path);
+                close(client_fd);
+            }
+            root->mode = ntohl(mode);
 
-	        if(read(client_fd, root->hash, HASH_SIZE*sizeof(char)) == -1) {
-	        	fprintf(stderr, "read: failed at reading hash for '%s'\n", root->path);
-	        	close(client_fd);
-	        }
+            if(read(client_fd, root->hash, HASH_SIZE*sizeof(char)) == -1) {
+                fprintf(stderr, "read: failed at reading hash for '%s'\n", root->path);
+                close(client_fd);
+            }
 
-	        uint32_t size;
-	        if(read(client_fd, &size, sizeof(uint32_t)) == -1) {
-	        	fprintf(stderr, "read: failed at reading size for '%s'\n", root->path);
-	        	close(client_fd);
-	        }
-	        root->size = ntohl(size);
-	        //printf("%s %u %o\n", root->path, ntohl(size), root->mode & 0777);		
+            uint32_t size;
+            if(read(client_fd, &size, sizeof(uint32_t)) == -1) {
+                fprintf(stderr, "read: failed at reading size for '%s'\n", root->path);
+                close(client_fd);
+            }
+            root->size = ntohl(size);
+            //printf("%s %u %o\n", root->path, ntohl(size), root->mode & 0777);     
 
-			if(S_ISREG(root->mode)){
-		        FILE *f;
-		        f = malloc(sizeof(FILE *));
-		        f = fopen(dest, "rb");
-		        if(!f){ // file does not exist on server
-		        	if(write(client_fd, &MISMATCH_N, sizeof(int)) == -1) {
-		        		fprintf(stderr, "write: failed at sending mismatch error\n");
-		        		close(client_fd);
-		        	}
+            if(S_ISREG(root->mode)){
+                FILE *f;
+                f = malloc(sizeof(FILE *));
+                f = fopen(dest, "rb");
+                if(!f){ // file does not exist on server
+                    if(write(client_fd, &MISMATCH_N, sizeof(int)) == -1) {
+                        fprintf(stderr, "write: failed at sending mismatch error\n");
+                        close(client_fd);
+                    }
 
-		        	// reads the file's contents over the socket from the client
-					int bytes_read = 0;
-		        	int r;
-		        	char buf;
+                    // reads the file's contents over the socket from the client
+                    int bytes_read = 0;
+                    int r;
+                    char buf;
 
-		        	FILE *ffff;
-		        	ffff = malloc(sizeof(FILE *));
-		        	ffff = fopen(dest, "wb");
-		        	if (ffff == NULL) {
-		                if(write(client_fd, &MATCH_ERROR_N, sizeof(int)) == -1) {
-	        				fprintf(stderr, "write: failed at sending match error\n");
-	        				fclose(ffff);
-	        				close(client_fd);
-	        			}
-		            }
+                    FILE *ffff;
+                    ffff = malloc(sizeof(FILE *));
+                    ffff = fopen(dest, "wb");
+                    if (ffff == NULL) {
+                        if(write(client_fd, &MATCH_ERROR_N, sizeof(int)) == -1) {
+                            fprintf(stderr, "write: failed at sending match error\n");
+                            fclose(ffff);
+                            close(client_fd);
+                        }
+                    }
 
-					while(bytes_read < root->size) {
-		        		r = read(client_fd, &buf, sizeof(char));
+                    while(bytes_read < root->size) {
+                        r = read(client_fd, &buf, sizeof(char));
 
-		        		if(r == -1) {
-		        			if(write(client_fd, &TRANSMIT_ERROR_N, sizeof(int)) == -1) {
-			        			fprintf(stderr, "write: failed at sending transmit ok\n");
-			        			fclose(ffff);
-			        			close(client_fd);
-			        		}
-		        		}
-		        		if(r != 0) {
-		        			if(fwrite(&buf, sizeof(char), 1, ffff) == -1) {
-		        				if(write(client_fd, &TRANSMIT_ERROR_N, sizeof(int)) == -1) {
-			        				fprintf(stderr, "write: failed at sending transmit ok\n");
-			        				fclose(ffff);
-			        				close(client_fd);
-			        			}
-			        		}
-			        		bytes_read += r;
-		        		}
-		        	}
+                        if(r == -1) {
+                            if(write(client_fd, &TRANSMIT_ERROR_N, sizeof(int)) == -1) {
+                                fprintf(stderr, "write: failed at sending transmit ok\n");
+                                fclose(ffff);
+                                close(client_fd);
+                            }
+                        }
+                        if(r != 0) {
+                            if(fwrite(&buf, sizeof(char), 1, ffff) == -1) {
+                                if(write(client_fd, &TRANSMIT_ERROR_N, sizeof(int)) == -1) {
+                                    fprintf(stderr, "write: failed at sending transmit ok\n");
+                                    fclose(ffff);
+                                    close(client_fd);
+                                }
+                            }
+                            bytes_read += r;
+                        }
+                    }
 
-					if (chmod(dest, root->mode) == -1){
-				        fprintf(stderr, "chmod: '%s' can't be changed\n", dest);
-				        fclose(ffff);
-				        close(client_fd);
-			    	}
+                    if (chmod(dest, root->mode) == -1){
+                        fprintf(stderr, "chmod: '%s' can't be changed\n", dest);
+                        fclose(ffff);
+                        close(client_fd);
+                    }
 
-			    	fclose(ffff);
+                    fclose(ffff);
 
-			    	if(write(client_fd, &TRANSMIT_OK_N, sizeof(int)) == -1) {
-        				fprintf(stderr, "write: failed at sending transmit ok\n");
-        				close(client_fd);
-        			}
-					
+                    if(write(client_fd, &TRANSMIT_OK_N, sizeof(int)) == -1) {
+                        fprintf(stderr, "write: failed at sending transmit ok\n");
+                        close(client_fd);
+                    }
+                    
 
-		        } else if (f) { // file exists on server, check if they're the same
-		        	struct stat cb;
+                } else if (f) { // file exists on server, check if they're the same
+                    struct stat cb;
 
-		            if(lstat(dest, &cb) == -1) { 
-		                fprintf(stderr, "lstat: the name '%s' is not a file or directory\n", dest);
-		                fclose(f);
-		                close(client_fd);
-		            }
+                    if(lstat(dest, &cb) == -1) { 
+                        fprintf(stderr, "lstat: the name '%s' is not a file or directory\n", dest);
+                        fclose(f);
+                        close(client_fd);
+                    }
 
-		            if(cb.st_size == root->size) { // compare server file size to client file size
-		            	//printf("SIZES SAME\n");
-		                char *hashserver;
-		                hashserver = malloc(9);
-		                hashserver = hash(f);
+                    if(cb.st_size == root->size) { // compare server file size to client file size
+                        //printf("SIZES SAME\n");
+                        char *hashserver;
+                        hashserver = malloc(9);
+                        hashserver = hash(f);
 
-		                char str1[9];
-		                char str2[9];
+                        char str1[9];
+                        char str2[9];
 
-		                memcpy(str1, hashserver, 9);
-		                memcpy(str2, root->hash, 9);
-		                free(hashserver);
+                        memcpy(str1, hashserver, 9);
+                        memcpy(str2, root->hash, 9);
+                        free(hashserver);
 
-		                if(memcmp(str1, str2, 8) != 0) { // if sizes are the same, compare their hashes
-		                	//printf("MISMATCH\n");
-		                    if(write(client_fd, &MISMATCH_N, sizeof(int)) == -1) {
-		                    	fprintf(stderr, "write: failed at sending mismatch error\n");
-		                    	fclose(f);
-		                    	close(client_fd);
-		                    }
+                        if(memcmp(str1, str2, 8) != 0) { // if sizes are the same, compare their hashes
+                            //printf("MISMATCH\n");
+                            if(write(client_fd, &MISMATCH_N, sizeof(int)) == -1) {
+                                fprintf(stderr, "write: failed at sending mismatch error\n");
+                                fclose(f);
+                                close(client_fd);
+                            }
 
-		                    int bytes_read = 0;
-				        	int r;
-				        	char buf;
+                            int bytes_read = 0;
+                            int r;
+                            char buf;
 
-				        	FILE *ffff;
-				        	ffff = malloc(sizeof(FILE *));
-				        	ffff = fopen(dest, "wb");
-				        	if (ffff == NULL) {
-				                if(write(client_fd, &MATCH_ERROR_N, sizeof(int)) == -1) {
-			        				fprintf(stderr, "write: failed at sending match error\n");
-			        				fclose(ffff);
-			        				close(client_fd);
-			        			}
-				            }
+                            FILE *ffff;
+                            ffff = malloc(sizeof(FILE *));
+                            ffff = fopen(dest, "wb");
+                            if (ffff == NULL) {
+                                if(write(client_fd, &MATCH_ERROR_N, sizeof(int)) == -1) {
+                                    fprintf(stderr, "write: failed at sending match error\n");
+                                    fclose(ffff);
+                                    close(client_fd);
+                                }
+                            }
 
-							while(bytes_read < root->size) {
-				        		r = read(client_fd, &buf, sizeof(char));
+                            while(bytes_read < root->size) {
+                                r = read(client_fd, &buf, sizeof(char));
 
-				        		if(r == -1) {
-				        			if(write(client_fd, &TRANSMIT_ERROR_N, sizeof(int)) == -1) {
-					        			fprintf(stderr, "write: failed at sending transmit ok\n");
-					        			fclose(ffff);
-					        			close(client_fd);
-					        		}
-				        		}
-				        		if(r != 0) {
-				        			if(fwrite(&buf, sizeof(char), 1, ffff) == -1) {
-				        				if(write(client_fd, &TRANSMIT_ERROR_N, sizeof(int)) == -1) {
-					        				fprintf(stderr, "write: failed at sending transmit ok\n");
-					        				fclose(ffff);
-					        				close(client_fd);
-					        			}
-					        		}
-					        		bytes_read += r;
-				        		}
-				        	}
+                                if(r == -1) {
+                                    if(write(client_fd, &TRANSMIT_ERROR_N, sizeof(int)) == -1) {
+                                        fprintf(stderr, "write: failed at sending transmit ok\n");
+                                        fclose(ffff);
+                                        close(client_fd);
+                                    }
+                                }
+                                if(r != 0) {
+                                    if(fwrite(&buf, sizeof(char), 1, ffff) == -1) {
+                                        if(write(client_fd, &TRANSMIT_ERROR_N, sizeof(int)) == -1) {
+                                            fprintf(stderr, "write: failed at sending transmit ok\n");
+                                            fclose(ffff);
+                                            close(client_fd);
+                                        }
+                                    }
+                                    bytes_read += r;
+                                }
+                            }
 
-							if (chmod(dest, root->mode) == -1){
-						        fprintf(stderr, "chmod: '%s' can't be changed\n", dest);
-						        fclose(ffff);
-						        close(client_fd);
-					    	}
+                            if (chmod(dest, root->mode) == -1){
+                                fprintf(stderr, "chmod: '%s' can't be changed\n", dest);
+                                fclose(ffff);
+                                close(client_fd);
+                            }
 
-					    	fclose(ffff);
+                            fclose(ffff);
 
-					    	if(write(client_fd, &TRANSMIT_OK_N, sizeof(int)) == -1) {
-		        				fprintf(stderr, "write: failed at sending transmit ok\n");
-		        				close(client_fd);
-		        			}
-							
+                            if(write(client_fd, &TRANSMIT_OK_N, sizeof(int)) == -1) {
+                                fprintf(stderr, "write: failed at sending transmit ok\n");
+                                close(client_fd);
+                            }
+                            
 
-		                } else {
-		                    if(write(client_fd, &MATCH_N, sizeof(int)) == -1) {
-		                    	fprintf(stderr, "write: failed at sending match\n");
-		                    	fclose(f);
-		                    	close(client_fd);
-		                    }
-		                }
-		            } else { // if sizes are diff, file does not exist on server
-		            	//printf("SIZES DIFF");
-		            	if(write(client_fd, &MISMATCH_N, sizeof(int)) == -1) {
-		            		fprintf(stderr, "write: failed at sending mismatch error\n");
-		            		fclose(f);
-		            		close(client_fd);
-		            	}
+                        } else {
+                            if(write(client_fd, &MATCH_N, sizeof(int)) == -1) {
+                                fprintf(stderr, "write: failed at sending match\n");
+                                fclose(f);
+                                close(client_fd);
+                            }
+                        }
+                    } else { // if sizes are diff, file does not exist on server
+                        //printf("SIZES DIFF");
+                        if(write(client_fd, &MISMATCH_N, sizeof(int)) == -1) {
+                            fprintf(stderr, "write: failed at sending mismatch error\n");
+                            fclose(f);
+                            close(client_fd);
+                        }
 
-		            	int bytes_read = 0;
-			        	int r;
-			        	char buf;
+                        int bytes_read = 0;
+                        int r;
+                        char buf;
 
-			        	FILE *ffff;
-			        	ffff = malloc(sizeof(FILE *));
-			        	ffff = fopen(dest, "wb");
-			        	if (ffff == NULL) {
-			                if(write(client_fd, &MATCH_ERROR_N, sizeof(int)) == -1) {
-		        				fprintf(stderr, "write: failed at sending match error\n");
-		        				fclose(ffff);
-		        				close(client_fd);
-		        			}
-			            }
+                        FILE *ffff;
+                        ffff = malloc(sizeof(FILE *));
+                        ffff = fopen(dest, "wb");
+                        if (ffff == NULL) {
+                            if(write(client_fd, &MATCH_ERROR_N, sizeof(int)) == -1) {
+                                fprintf(stderr, "write: failed at sending match error\n");
+                                fclose(ffff);
+                                close(client_fd);
+                            }
+                        }
 
-						while(bytes_read < root->size) {
-			        		r = read(client_fd, &buf, sizeof(char));
+                        while(bytes_read < root->size) {
+                            r = read(client_fd, &buf, sizeof(char));
 
-			        		if(r == -1) {
-			        			if(write(client_fd, &TRANSMIT_ERROR_N, sizeof(int)) == -1) {
-				        			fprintf(stderr, "write: failed at sending transmit ok\n");
-				        			fclose(ffff);
-				        			close(client_fd);
-				        		}
-			        		}
-			        		if(r != 0) {
-			        			if(fwrite(&buf, sizeof(char), 1, ffff) == -1) {
-			        				if(write(client_fd, &TRANSMIT_ERROR_N, sizeof(int)) == -1) {
-				        				fprintf(stderr, "write: failed at sending transmit ok\n");
-				        				fclose(ffff);
-				        				close(client_fd);
-				        			}
-				        		}
-				        		bytes_read += r;
-			        		}
-			        	}
+                            if(r == -1) {
+                                if(write(client_fd, &TRANSMIT_ERROR_N, sizeof(int)) == -1) {
+                                    fprintf(stderr, "write: failed at sending transmit ok\n");
+                                    fclose(ffff);
+                                    close(client_fd);
+                                }
+                            }
+                            if(r != 0) {
+                                if(fwrite(&buf, sizeof(char), 1, ffff) == -1) {
+                                    if(write(client_fd, &TRANSMIT_ERROR_N, sizeof(int)) == -1) {
+                                        fprintf(stderr, "write: failed at sending transmit ok\n");
+                                        fclose(ffff);
+                                        close(client_fd);
+                                    }
+                                }
+                                bytes_read += r;
+                            }
+                        }
 
-						if (chmod(dest, root->mode) == -1){
-					        fprintf(stderr, "chmod: '%s' can't be changed\n", dest);
-					        fclose(ffff);
-					        close(client_fd);
-				    	}
+                        if (chmod(dest, root->mode) == -1){
+                            fprintf(stderr, "chmod: '%s' can't be changed\n", dest);
+                            fclose(ffff);
+                            close(client_fd);
+                        }
 
-				    	fclose(ffff);
+                        fclose(ffff);
 
-				    	if(write(client_fd, &TRANSMIT_OK_N, sizeof(int)) == -1) {
-	        				fprintf(stderr, "write: failed at sending transmit ok\n");
-	        				close(client_fd);
-	        			}
-		            }
-		            fclose(f);
-		        }
-	        } else if (S_ISDIR(root->mode)) {
-	        	umask(0);
-        		mkdir(dest, root->mode);
+                        if(write(client_fd, &TRANSMIT_OK_N, sizeof(int)) == -1) {
+                            fprintf(stderr, "write: failed at sending transmit ok\n");
+                            close(client_fd);
+                        }
+                    }
+                    fclose(f);
+                }
+            } else if (S_ISDIR(root->mode)) {
+                umask(0);
+                mkdir(dest, root->mode);
      
-    			if(write(client_fd, &MATCH_N, sizeof(int)) == -1) {
-    				fprintf(stderr, "write: failed at sending match \n");
-    				close(client_fd);
-    			}
-        	
-	        }
-		}
-	}
+                if(write(client_fd, &MATCH_N, sizeof(int)) == -1) {
+                    fprintf(stderr, "write: failed at sending match \n");
+                    close(client_fd);
+                }
+            
+            }
+        }
+    }
 }
